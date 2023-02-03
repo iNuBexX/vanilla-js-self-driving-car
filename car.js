@@ -22,21 +22,4 @@ class Car {
         );
         ctx.fill();
     }  
-
-    update() {
-        if (this.controls.forward) {
-            this.speed += this.acceleration;
-        }
-        if (this.controls.reverse) {
-            this.speed -= this.acceleration;
-        }
-        if (this.speed > this.maxSpeed) {
-            this.speed = this.maxSpeed;
-        }
-        if (this.speed < -this.maxSpeed/2) {
-            this.speed = -this.maxSpeed/2;
-        }
-        this.y -= this.speed;
-    }
-
 }
