@@ -8,3 +8,11 @@ car.draw(ctx);
 
 // can you point towards a part of the code if i tell you what it does ?
 
+animate();
+
+function animate() {
+    car.update();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    car.draw(ctx);
+    requestAnimationFrame(animate);
+}   
