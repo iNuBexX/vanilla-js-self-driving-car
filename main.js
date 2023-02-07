@@ -17,19 +17,22 @@ if(localStorage.getItem("bestBrain")){
         }  
     }
 }
-const traffic=[
-    new Car(road.getLaneCenter(1),-100,30,50,"AI", 2),
-    new Car(road.getLaneCenter(0),-300,30,50,"AI", 2),
-    new Car(road.getLaneCenter(2),-300,30,50,"AI", 2),
-    new Car(road.getLaneCenter(1),-100,30,50,"AI", 2),
-    new Car(road.getLaneCenter(0),-500,30,50,"AI", 2),
-    new Car(road.getLaneCenter(2),-500,30,50,"AI", 2),
-    new Car(road.getLaneCenter(1),-700,30,50,"AI", 2),
-    new Car(road.getLaneCenter(2),-700,30,50,"AI", 2),
-    new Car(road.getLaneCenter(0),-900,30,50,"AI", 2),
-    new Car(road.getLaneCenter(1),-1300,30,50,"AI", 2),
-    new Car(road.getLaneCenter(2),-1300,30,50,"AI", 2),
-];
+
+const difficultySettings = {
+    easy: { spawnInterval: 4000, speed: 1.8 },
+    medium: { spawnInterval: 2500, speed: 2.2 },
+    hard: { spawnInterval: 1000, speed: 3.7 }
+};
+let currentDifficulty = 'hard';
+let lastSpawnTime = 0;
+
+const traffic = [];
+const initialTrafficCount = 15;
+for(let i = 0; i < initialTrafficCount; i++){
+    const laneIndex = Math.floor(Math.random() * road.laneCount);
+    const y = -i * 250;
+    traffic.push(new Car(road.getLaneCenter(laneIndex), y, 30, 50, "AI", difficultySettings[currentDifficulty].speed));
+}
 
 animate();
 
@@ -49,6 +52,17 @@ function generateCars(N){
 }
 
 function animate(time){
+
+    const { spawnInterval, speed } = difficultySettings[currentDifficulty];
+    const someCarIsAlive = cars.some(c => !c.damaged);
+
+    if (someCarIsAlive && (time - lastSpawnTime > spawnInterval)) {
+        const laneIndex = Math.floor(Math.random() * road.laneCount);
+        const spawnY = bestCar.y - window.innerHeight - 100;
+        traffic.push(new Car(road.getLaneCenter(laneIndex), spawnY, 30, 50, "AI", speed));
+        lastSpawnTime = time;
+    }
+
     for(let i=0;i<traffic.length;i++){
         traffic[i].update(road.borders,[]);
     }
