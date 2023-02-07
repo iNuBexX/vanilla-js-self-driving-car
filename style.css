@@ -6,7 +6,11 @@ body {
     text-align: center;
 }
 
-canvas {
+#carCanvas {
     border: 1px solid #ccc;
-    background: lightgray;
+    background: rgb(139, 139, 139);
+}
+#networkCanvas {
+    border: 1px solid #ccc;
+    background: rgb(0, 0, 0);
 }
