@@ -27,32 +27,34 @@
         <button onclick="discard()">Discard 🗑️</button>
 
         <h1>Agent Properties</h1>
+
         <div class="mutation-controls">
             <label for="mutationInput">Neural Network Mutation</label>
             <input id="mutationInput" type="number" value="0.01" />
             <button onclick="saveMutation()">Save Mutation</button>
         </div>
         <div class="culling-controls">
+            <label for="numberOfStartingAgentsInput">Number Of Starting Agents</label>
+            <input id="numberOfStartingAgentsInput" type="number" value="200" />
+            <button onclick="SaveNbOfStartingAgents()">Save</button>
+        </div>       
+        
+        <div class="culling-controls">
             <label for="cullDistanceInput">Culling Distance</label>
             <input id="cullDistanceInput" type="number" value="500" />
             <button onclick="saveCullDistance()">Save Culling</button>
-        </div>        
+        </div>    
 
-        <h1>Sensor Properties</h1>
+        <h1>Sensors Properties</h1>
         <div class="sensor-controls">
-            <label for="rayCountInput">Sensor Rays</label>
-            <input id="rayCountInput" type="number" value="40" />
 
             <label for="raySpreadInput">Sensor Angle</label>
             <input id="raySpreadInput" type="number" value="180" />
-            <button onclick="saveSensor()">Save Sensors</button>
-        </div>
-        <div class="sensor-controls">
-            <label for="rayCountInput">Sensor Rays</label>
+            <label for="rayCountInput">Sensor Number of Rays</label>
             <input id="rayCountInput" type="number" value="40" />
-            
-            <label for="raySpreadInput">Sensor Angle</label>
-            <input id="raySpreadInput" type="number" value="180" />
+
+            <label for="rayLengthInput">Sensor Ray Length</label>
+            <input id="rayLengthInput" type="number" value="150" />
             <button onclick="saveSensor()">Save Sensors</button>
         </div>
     </div>

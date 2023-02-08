@@ -6,7 +6,7 @@ let timeToLive = localStorage.getItem("timeToLive") || 300;
 const carCtx = carCanvas.getContext("2d");
 const networkCtx = networkCanvas.getContext("2d");
 const road=new Road(carCanvas.width/2,carCanvas.width*0.9);
-const numberOfSpawnedCars = 500;
+const numberOfSpawnedCars = parseInt(localStorage.getItem("numberOfStartingAgents")) || 200;
 let cars=generateCars(numberOfSpawnedCars);
 let bestCar=cars[0];
 let animationFrameId;
@@ -15,13 +15,33 @@ let mutationAmount = parseFloat(localStorage.getItem("mutationAmount")) || 0.5;
 let cullDistance = parseInt(localStorage.getItem("cullDistance")) || 500;
 let TRAFFIC_GRID_SPACING = 300; // The desired distance between traffic cars in pixels
 let nextSpawnY = 0; // Tracks the y-coordinate for the next row of traffic
-
+if(localStorage.getItem("mutationAmount")){
+    document.getElementById("mutationInput").value = parseFloat(localStorage.getItem("mutationAmount"));
+}
+if(localStorage.getItem("cullDistance")){
+    document.getElementById("cullDistanceInput").value = parseInt(localStorage.getItem("cullDistance"));
+}   
+if(localStorage.getItem("timeToLive")){
+    document.getElementById("ttlInput").value = parseInt(localStorage.getItem("timeToLive"));
+}
+if(localStorage.getItem("numberOfStartingAgents")){
+    document.getElementById("numberOfStartingAgentsInput").value = parseInt(localStorage.getItem("numberOfStartingAgents"));
+}
+if(localStorage.getItem("rayCount")){
+    document.getElementById("rayCountInput").value = parseInt(localStorage.getItem("rayCount"));
+}
+if(localStorage.getItem("raySpread")){
+    document.getElementById("raySpreadInput").value = parseFloat(localStorage.getItem("raySpread"));
+}
+if(localStorage.getItem("rayLength")){
+    document.getElementById("rayLengthInput").value = parseFloat(localStorage.getItem("rayLength"));
+}   
 
 if(localStorage.getItem("bestBrain")){
     for(let i=0;i<cars.length;i++){
         cars[i].brain=JSON.parse(localStorage.getItem("bestBrain"));
         if(i!=0){
-            NeuralNetwork.mutate(cars[i].brain,0.05);
+            NeuralNetwork.mutate(cars[i].brain,mutationAmount);
         }  
     }
 }
@@ -50,6 +70,15 @@ function updateDifficultyButtons() {
         }
     });
 }
+
+function saveSensor(){
+    const rayCount = parseInt(document.getElementById("rayCountInput").value);
+    const raySpread = parseFloat(document.getElementById("raySpreadInput").value);
+    const rayLength = parseFloat(document.getElementById("rayLengthInput").value);
+    localStorage.setItem("rayCount", rayCount);
+    localStorage.setItem("raySpread", raySpread);
+    localStorage.setItem("rayLength", rayLength);
+}
 function saveTTL() {
     timeToLive = document.getElementById("ttlInput").value;
     localStorage.setItem("timeToLive", timeToLive);
@@ -65,6 +94,11 @@ function saveCullDistance() {
     localStorage.setItem("cullDistance", cullDistance);
 }
 
+function SaveNbOfStartingAgents(){
+    numberOfStartingAgents = parseInt(document.getElementById("numberOfStartingAgentsInput").value);
+    localStorage.setItem("numberOfStartingAgents", numberOfStartingAgents);
+}
+
 
 function save(){
     localStorage.setItem("bestBrain",JSON.stringify(bestCar.brain));
@@ -74,13 +108,16 @@ function discard(){
     localStorage.removeItem("bestBrain");
 }
 function generateCars(N){
+    const numberOfStartingAgents = parseInt(localStorage.getItem("numberOfStartingAgents")) || 200;
+    const rayCount = parseInt(localStorage.getItem("rayCount")) || 40;
+    const raySpread = parseFloat(localStorage.getItem("raySpread")) || 180;
+    const rayLength = parseFloat(localStorage.getItem("rayLength")) || 150;
     const cars=[];
-    for(let i=1;i<=N;i++){
-        cars.push(new Car(road.getLaneCenter(1),100,30,50,"NeuralNetwork", 8, timeToLive));
+    for(let i=1;i<=numberOfStartingAgents;i++){
+        cars.push(new Car(road.getLaneCenter(1),100,30,50,"NeuralNetwork", 5, timeToLive, rayCount, raySpread * Math.PI / 180, rayLength));
     }
     return cars;
 }
-
 function getTopOfScreen(followedCar) {
     // If there's no car to follow (e.g., at the very start), default to 0
     if (!followedCar) {
@@ -97,7 +134,7 @@ function resetSimulation() {
     traffic.length = 0; // Clear existing traffic
     cars = generateCars(numberOfSpawnedCars);
     bestCar = cars[0];
-    nextSpawnY = bestCar.y - window.innerHeight*0.4; // Reset the spawn frontier
+    nextSpawnY = bestCar.y - window.innerHeight*0.12; // Reset the spawn frontier
 
     if (localStorage.getItem("bestBrain")) {
         for (let i = 0; i < cars.length; i++) {
@@ -111,9 +148,9 @@ function resetSimulation() {
 }
 
 const difficultySettings = {
-    easy: { speed: 2.5, pixelDiff: 600 },
-    medium: { speed: 3, pixelDiff: 500 },
-    hard: { speed: 3.7, pixelDiff: 300 }
+    easy: { speed: 4, pixelDiff: 1000 },
+    medium: { speed: 7, pixelDiff: 400 },
+    hard: { speed: 13, pixelDiff: 200 }
 };
 TRAFFIC_GRID_SPACING = difficultySettings[currentDifficulty].pixelDiff;
 resetSimulation();
