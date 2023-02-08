@@ -134,6 +134,9 @@ class Car {
     }
 
     #move() {
+        if(this.controlType=="AI"){
+            return;
+        }
         if (this.controls.forward) {
             this.speed += this.acceleration;
         }
