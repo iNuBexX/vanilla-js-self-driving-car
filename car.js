@@ -1,19 +1,22 @@
 class Car {
-    constructor(x, y, width, height, controlType, maxSpeed=3) {
+    constructor(x, y, width, height, controlType, maxSpeed=3,timeToLive=300) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.maxSpeed = 2;
         this.speed = 0;
         this.acceleration = 0.2;
         this.maxSpeed = maxSpeed;
-        this.friction = 0.08;
+        this.friction = 0.1;
         this.controlType = controlType;
         this.useBrain = controlType == "NeuralNetwork";
+        this.reverseTime = 0;
+        this.stillTime = 0;
+        this.lifeTime = 0;
+        this.timeToLive = timeToLive; // Approx. 5 seconds at 60fps
         if(this.controlType!="AI"){
             this.sensor = new Sensor(this);
-            this.brain = new NeuralNetwork([this.sensor.rayCount,6,4]);
+            this.brain = new NeuralNetwork([this.sensor.rayCount,8,4]);
         }
         this.controls = new Controls(controlType);
         this.angle = 0;
@@ -43,6 +46,36 @@ class Car {
         this.polygon=this.#createPolygon();
         this.damaged=this.#assessDamage(roadBorders,traffic);
         }
+        //////////////////////
+        // training plan
+        //////////////////////
+
+        this.lifeTime++;
+        if (this.controlType === "NeuralNetwork") { 
+            if (this.lifeTime > this.timeToLive) {
+                this.damaged = true;
+            }
+        }
+        if (this.speed <= 0) {
+            this.reverseTime++;
+        }
+
+        if (this.reverseTime > 10) { 
+            this.damaged = true;
+        }
+
+        if (Math.abs(this.speed) < this.friction) {
+            this.stillTime++;
+        } else {
+            this.stillTime = 0;
+        }
+
+        if (this.stillTime > 150) {
+            this.damaged = true;
+        }
+        //////////////////////
+        // end of training plan
+        //////////////////////
         if(this.sensor){
             this.sensor.update(roadBorders,traffic);
             const offsets=this.sensor.readings.map(s=>s==null?0:1-s.offset); 
@@ -94,7 +127,7 @@ class Car {
     }
 
     #move() {
-                if (this.controls.forward) {
+        if (this.controls.forward) {
             this.speed += this.acceleration;
         }
         if (this.controls.reverse) {

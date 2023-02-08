@@ -8,8 +8,29 @@
 <body>
     <canvas id="carCanvas"></canvas>
     <div id="verticalButtons">
+        <div>
+            <h1>Time To Live</h1>
+            <div class="ttl-controls">
+                <p>Time Left: <span id="ttlCounter">0</span></p>
+                <input id="ttlInput" type="number" value="300" />
+                <button onclick="saveTTL()">Save TTL</button>
+            </div>
+        </div>
+        <h1>Difficulty</h1>
+        <div class="Difficulty">
+            <button onclick="setDifficulty('easy')" data-level="easy">Easy</button>
+            <button onclick="setDifficulty('medium')" data-level="medium">Medium</button>
+            <button onclick="setDifficulty('hard')" data-level="hard">Hard</button>
+        </div>
+        <h1>Save/Load</h1>
         <button onclick="save()">Save 💾</button>
         <button onclick="discard()">Discard 🗑️</button>
+
+        <h1>Mutation</h1>
+        <div class="mutation-controls">
+            <input id="mutationInput" type="number" value="0.2" />
+            <button onclick="saveMutation()">Save Mutation</button>
+        </div>
     </div>
     <canvas id="networkCanvas"></canvas>
     <script src="utils.js"></script>
