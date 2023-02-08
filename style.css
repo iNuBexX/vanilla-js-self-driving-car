@@ -42,11 +42,18 @@ button:hover{
     background: rgb(0, 0, 0);
 }
 
-input  {
+input, label {
     width: 50px;
     margin: 10px;
 }
 
 h1 {
     margin: 15px;
+}
+
+.ttl-controls, .mutation-controls, .culling-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
 }

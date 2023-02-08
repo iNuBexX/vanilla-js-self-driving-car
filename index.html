@@ -26,11 +26,17 @@
         <button onclick="save()">Save 💾</button>
         <button onclick="discard()">Discard 🗑️</button>
 
-        <h1>Mutation</h1>
+        <h1>Agent Properties</h1>
         <div class="mutation-controls">
+            <label for="mutationInput">Neural Network Mutation</label>
             <input id="mutationInput" type="number" value="0.2" />
             <button onclick="saveMutation()">Save Mutation</button>
         </div>
+        <div class="culling-controls">
+            <label for="cullDistanceInput">Culling Distance</label>
+            <input id="cullDistanceInput" type="number" value="500" />
+            <button onclick="saveCullDistance()">Save Culling</button>
+        </div>        
     </div>
     <canvas id="networkCanvas"></canvas>
     <script src="utils.js"></script>

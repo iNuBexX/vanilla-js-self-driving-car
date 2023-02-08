@@ -10,7 +10,10 @@ const numberOfSpawnedCars = 300;
 let cars=generateCars(numberOfSpawnedCars);
 let bestCar=cars[0];
 let animationFrameId;
+const spawnInterval = 2000; // Spawn a wave every 2 seconds
+let lastSpawnTime = 0;
 let mutationAmount = parseFloat(localStorage.getItem("mutationAmount")) || 0.2;
+let cullDistance = parseInt(localStorage.getItem("cullDistance")) || 500;
 if(localStorage.getItem("bestBrain")){
     for(let i=0;i<cars.length;i++){
         cars[i].brain=JSON.parse(localStorage.getItem("bestBrain"));
@@ -21,12 +24,11 @@ if(localStorage.getItem("bestBrain")){
 }
 
 const traffic=[];
-let lastSpawnY = cars[0].y;
 
 const difficultySettings = {
-    easy: { speed: 2.5, obstacleSpacing: 500 },
-    medium: { speed: 3.1, obstacleSpacing: 450 },
-    hard: { speed: 3.7, obstacleSpacing: 300 }
+    easy: { speed: 2.5, spawnInterval: 60 },
+    medium: { speed: 3, spawnInterval: 50 },
+    hard: { speed: 3.7, spawnInterval: 40 }
 };
 let currentDifficulty = localStorage.getItem("difficulty") || 'hard';
 
@@ -40,13 +42,10 @@ function setDifficulty(level) {
 }
 
 function updateDifficultyButtons() {
-    console.log('Updating buttons, current difficulty:', currentDifficulty);
     const buttons = document.querySelectorAll('.Difficulty button');
     buttons.forEach(button => {
-        console.log('Checking button for level:', button.dataset.level);
         if (button.dataset.level === currentDifficulty) {
             button.classList.add('active');
-            console.log(button.dataset.level,'active');
         } else {
             button.classList.remove('active');
         }
@@ -60,6 +59,11 @@ function saveTTL() {
 function saveMutation() {
     mutationAmount = parseFloat(document.getElementById("mutationInput").value);
     localStorage.setItem("mutationAmount", mutationAmount);
+}
+
+function saveCullDistance() {
+    cullDistance = parseInt(document.getElementById("cullDistanceInput").value);
+    localStorage.setItem("cullDistance", cullDistance);
 }
 
 animate();
@@ -87,7 +91,6 @@ function resetSimulation() {
     traffic.length = 0;
 
     cars = generateCars(numberOfSpawnedCars);
-    lastSpawnY = cars[0].y;
     bestCar = cars[0];
 
     if (localStorage.getItem("bestBrain")) {
@@ -102,20 +105,27 @@ function resetSimulation() {
 }
 
 function animate(time){
-    const { speed, obstacleSpacing } = difficultySettings[currentDifficulty];
-    
-    // Smart traffic generation
-    const spawnY = bestCar.y - window.innerHeight - obstacleSpacing;
-    if (lastSpawnY > spawnY) {
-        const availableLanes = [0, 1, 2];
-        const spawnLaneCount = Math.random() < 0.5 ? 1 : 2; // Spawn 1 or 2 cars
-        
-        for (let i = 0; i < spawnLaneCount; i++) {
+    // Time-based traffic spawning
+    const { speed, spawnInterval } = difficultySettings[currentDifficulty];
+
+    // Time-based traffic spawning
+    if (lastSpawnTime === 0 || time - lastSpawnTime > spawnInterval) {
+        const spawnY = bestCar.y - window.innerHeight - 20; // Start well off-screen
+
+        const availableLanes = Array.from(Array(road.laneCount).keys());
+        const spawnCount = Math.floor(Math.random() * 2) + 1; // 1 or 2 cars
+
+        for (let i = 0; i < spawnCount; i++) {
+            if (availableLanes.length === 0) break;
+
             const laneIndex = Math.floor(Math.random() * availableLanes.length);
             const selectedLane = availableLanes.splice(laneIndex, 1)[0];
-            traffic.push(new Car(road.getLaneCenter(selectedLane), lastSpawnY - obstacleSpacing, 30, 50, "AI", speed));
+            
+            traffic.push(new Car(road.getLaneCenter(selectedLane), spawnY, 30, 50, "AI", speed));
+            lastSpawnTime = spawnInterval;
         }
-        lastSpawnY -= obstacleSpacing;
+        lastSpawnTime -= time;
+
     }
 
     for(let i=0;i<traffic.length;i++){
@@ -123,14 +133,21 @@ function animate(time){
     }
     for(let i=0;i<cars.length;i++){
         cars[i].update(road.borders,traffic);
+        if (cars[i].y > bestCar.y + cullDistance) {
+                cars[i].damaged = true;
+        }
     }
-    bestCar = cars.find(c=>c.y==Math.min(...cars.map(c=>c.y)));
+
+    cars = cars.filter(c => !c.damaged);
+
 
     if (cars.every(c => c.damaged)) {
         save();
         resetSimulation();
         return;
     }   
+
+
 
     carCanvas.height=window.innerHeight;
     networkCanvas.height=window.innerHeight;
