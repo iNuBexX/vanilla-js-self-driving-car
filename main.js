@@ -1,19 +1,22 @@
 const carCanvas=document.getElementById("carCanvas");
-carCanvas.width=200;
+carCanvas.width=185;
 const networkCanvas=document.getElementById("networkCanvas");
-networkCanvas.width=400;
+networkCanvas.width=500;
 let timeToLive = localStorage.getItem("timeToLive") || 300;
 const carCtx = carCanvas.getContext("2d");
 const networkCtx = networkCanvas.getContext("2d");
 const road=new Road(carCanvas.width/2,carCanvas.width*0.9);
-const numberOfSpawnedCars = 300;
+const numberOfSpawnedCars = 500;
 let cars=generateCars(numberOfSpawnedCars);
 let bestCar=cars[0];
 let animationFrameId;
-const spawnInterval = 2000; // Spawn a wave every 2 seconds
 let lastSpawnTime = 0;
-let mutationAmount = parseFloat(localStorage.getItem("mutationAmount")) || 0.2;
+let mutationAmount = parseFloat(localStorage.getItem("mutationAmount")) || 0.5;
 let cullDistance = parseInt(localStorage.getItem("cullDistance")) || 500;
+let TRAFFIC_GRID_SPACING = 300; // The desired distance between traffic cars in pixels
+let nextSpawnY = 0; // Tracks the y-coordinate for the next row of traffic
+
+
 if(localStorage.getItem("bestBrain")){
     for(let i=0;i<cars.length;i++){
         cars[i].brain=JSON.parse(localStorage.getItem("bestBrain"));
@@ -25,11 +28,7 @@ if(localStorage.getItem("bestBrain")){
 
 const traffic=[];
 
-const difficultySettings = {
-    easy: { speed: 2.5, spawnInterval: 60 },
-    medium: { speed: 3, spawnInterval: 50 },
-    hard: { speed: 3.7, spawnInterval: 40 }
-};
+
 let currentDifficulty = localStorage.getItem("difficulty") || 'hard';
 
 document.getElementById("ttlInput").value = timeToLive;
@@ -66,8 +65,7 @@ function saveCullDistance() {
     localStorage.setItem("cullDistance", cullDistance);
 }
 
-animate();
-updateDifficultyButtons();
+
 function save(){
     localStorage.setItem("bestBrain",JSON.stringify(bestCar.brain));
 }
@@ -83,15 +81,23 @@ function generateCars(N){
     return cars;
 }
 
+function getTopOfScreen(followedCar) {
+    // If there's no car to follow (e.g., at the very start), default to 0
+    if (!followedCar) {
+        return 0;
+    }
+    return followedCar.y - carCanvas.height * 0.7;
+}
+
 function resetSimulation() {
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
 
-    traffic.length = 0;
-
+    traffic.length = 0; // Clear existing traffic
     cars = generateCars(numberOfSpawnedCars);
     bestCar = cars[0];
+    nextSpawnY = bestCar.y - window.innerHeight*0.4; // Reset the spawn frontier
 
     if (localStorage.getItem("bestBrain")) {
         for (let i = 0; i < cars.length; i++) {
@@ -104,41 +110,58 @@ function resetSimulation() {
     animationFrameId = requestAnimationFrame(animate);
 }
 
+const difficultySettings = {
+    easy: { speed: 2.5, pixelDiff: 600 },
+    medium: { speed: 3, pixelDiff: 500 },
+    hard: { speed: 3.7, pixelDiff: 300 }
+};
+TRAFFIC_GRID_SPACING = difficultySettings[currentDifficulty].pixelDiff;
+resetSimulation();
+updateDifficultyButtons();
 function animate(time){
     // Time-based traffic spawning
     const { speed, spawnInterval } = difficultySettings[currentDifficulty];
-
-    // Time-based traffic spawning
-    if (lastSpawnTime === 0 || time - lastSpawnTime > spawnInterval) {
-        const spawnY = bestCar.y - window.innerHeight - 20; // Start well off-screen
-
+    const spawnHorizon = getTopOfScreen(bestCar) - 200; // A line 200px above the viewport
+    const aliveCars = cars.filter(c => !c.damaged);
+    let leadCar = null;
+    if (aliveCars.length > 0) {
+        leadCar = aliveCars.reduce((best, current) => {
+            return current.y < best.y ? current : best;
+        }, aliveCars[0]);
+    } else {
+        // If no cars are alive, focus on the best one before reset.
+        leadCar = bestCar;
+    }
+    while (nextSpawnY > spawnHorizon) {
+        const spawnY = nextSpawnY;
         const availableLanes = Array.from(Array(road.laneCount).keys());
         const spawnCount = Math.floor(Math.random() * 2) + 1; // 1 or 2 cars
 
         for (let i = 0; i < spawnCount; i++) {
-            if (availableLanes.length === 0) break;
+            if (availableLanes.length > 0) {
+                const laneIndex = Math.floor(Math.random() * availableLanes.length);
+                const lane = availableLanes[laneIndex];
+                availableLanes.splice(laneIndex, 1); // Remove lane to avoid collision on spawn
 
-            const laneIndex = Math.floor(Math.random() * availableLanes.length);
-            const selectedLane = availableLanes.splice(laneIndex, 1)[0];
-            
-            traffic.push(new Car(road.getLaneCenter(selectedLane), spawnY, 30, 50, "AI", speed));
-            lastSpawnTime = spawnInterval;
+                traffic.push(new Car(road.getLaneCenter(lane), spawnY, 30, 50, "AI", speed));
+            }
         }
-        lastSpawnTime -= time;
-
+        // Move to the next grid line, further up the road
+        nextSpawnY -= TRAFFIC_GRID_SPACING;
     }
-
     for(let i=0;i<traffic.length;i++){
         traffic[i].update(road.borders,[]);
     }
     for(let i=0;i<cars.length;i++){
         cars[i].update(road.borders,traffic);
         if (cars[i].y > bestCar.y + cullDistance) {
-                cars[i].damaged = true;
+                
+            cars[i].damaged = true;
         }
     }
-
-    cars = cars.filter(c => !c.damaged);
+    bestCar=cars.find(c=>c.y==Math.min(
+            ...cars.map(c=>c.y)
+        ));
 
 
     if (cars.every(c => c.damaged)) {
@@ -153,7 +176,7 @@ function animate(time){
     networkCanvas.height=window.innerHeight;
 
     carCtx.save();
-    carCtx.translate(0,-bestCar.y+carCanvas.height*0.7);
+    carCtx.translate(0,-leadCar.y+carCanvas.height*0.7);
 
     road.draw(carCtx);
     for(let i=0;i<traffic.length;i++){
@@ -164,7 +187,12 @@ function animate(time){
         cars[i].draw(carCtx,"blue");
     }
     carCtx.globalAlpha=1;
-    bestCar.draw(carCtx,"blue",true);
+    if (bestCar == leadCar) {
+        bestCar.draw(carCtx, "green", true);
+    } else {
+        leadCar.draw(carCtx, "purple",true);
+        bestCar.draw(carCtx, "green",false,true);
+    }
     carCtx.restore();
     
     ttlCounter.innerText = Math.max(0, Math.round(bestCar.timeToLive - bestCar.lifeTime));
