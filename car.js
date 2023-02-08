@@ -1,7 +1,10 @@
 class Car {
-    constructor(x, y, width, height, controlType, maxSpeed=3,timeToLive=300) {
+    constructor(x, y, width, height, controlType, maxSpeed=3,timeToLive=300,rayCount=8, raySpread=Math.PI, rayLength=150) {
         this.x = x;
         this.y = y;
+        this.rayCount= rayCount;
+        this.raySpread= raySpread;
+        this.rayLength= rayLength;
         this.width = width;
         this.height = height;
         this.speed = 0;
@@ -16,7 +19,7 @@ class Car {
         this.timeToLive = timeToLive; // Approx. 5 seconds at 60fps
         if(this.controlType!="AI"){
             this.sensor = new Sensor(this);
-            this.brain = new NeuralNetwork([this.sensor.rayCount+1,9,4]);
+            this.brain = new NeuralNetwork([this.sensor.rayCount+1,15,4]);
         }
         this.controls = new Controls(controlType);
         this.angle = 0;
