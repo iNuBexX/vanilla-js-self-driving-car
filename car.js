@@ -73,16 +73,17 @@ class Car {
             this.stillTime = 0;
         }
 
-        if (this.stillTime > 150) {
+        if (this.stillTime > 150 && this.controlType === "NeuralNetwork") {
             this.damaged = true;
         }
         //////////////////////
         // end of training plan
         //////////////////////
-        if(this.sensor){
+        if(this.sensor && !this.damaged){
             this.sensor.update(roadBorders,traffic);
             const offsets=this.sensor.readings.map(s=>s==null?0:1-s.offset); 
-            const outputs=NeuralNetwork.feedForward(offsets,this.brain);
+            const inputs = [...offsets, this.speed / this.maxSpeed];
+            const outputs=NeuralNetwork.feedForward(inputs,this.brain);
             if(this.useBrain){
                 this.controls.forward=outputs[0];
                 this.controls.left=outputs[1];
