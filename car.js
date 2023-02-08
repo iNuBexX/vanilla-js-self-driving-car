@@ -16,15 +16,17 @@ class Car {
         this.timeToLive = timeToLive; // Approx. 5 seconds at 60fps
         if(this.controlType!="AI"){
             this.sensor = new Sensor(this);
-            this.brain = new NeuralNetwork([this.sensor.rayCount,5,3,4]);
+            this.brain = new NeuralNetwork([this.sensor.rayCount+1,9,4]);
         }
         this.controls = new Controls(controlType);
         this.angle = 0;
         this.damaged = false;
     }
-    draw(ctx,color,drawSensor=false) {
+    draw(ctx,color,drawSensor=false,isbest=false) {
         if(this.damaged) {
-            ctx.fillStyle = "gray";
+            if(!isbest) {
+                ctx.fillStyle = "gray";
+            }
         }  
         else {
             ctx.fillStyle = color;
@@ -41,11 +43,12 @@ class Car {
     }  
 
     update(roadBorders,traffic) {
-        if(!this.damaged) {
+        if(this.damaged)
+            return;
+
         this.#move();
         this.polygon=this.#createPolygon();
         this.damaged=this.#assessDamage(roadBorders,traffic);
-        }
         //////////////////////
         // training plan
         //////////////////////
