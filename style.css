@@ -8,11 +8,18 @@ body {
     align-items: center;
 }
 
-#verticalButtons {
+#verticalElements {
+    position: relative; /* Change to relative to be in flow, but still allow max-height */
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    margin: 15px;
+    max-height: calc(100vh - 30px); /* Calculate max-height based on viewport height minus margin */
+    overflow-y: auto;
+    width: 200px; /* Give it a fixed width */
+    background: lightgray; /* Add a background to make it distinct */
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 button{
