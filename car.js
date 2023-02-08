@@ -63,7 +63,7 @@ class Car {
             this.reverseTime++;
         }
 
-        if (this.reverseTime > 10) { 
+        if (this.reverseTime > 10 && this.controlType === "NeuralNetwork") { 
             this.damaged = true;
         }
 
