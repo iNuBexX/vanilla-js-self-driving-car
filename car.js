@@ -94,6 +94,9 @@ class Car {
     }
 
     #assessDamage(roadBorders,traffic) {
+        if(this.controlType=="AI"){
+            return false;
+        }
         for(let i=0;i<traffic.length;i++){
             if(polygonIntersect(this.polygon,traffic[i].polygon)){
                 return true;
