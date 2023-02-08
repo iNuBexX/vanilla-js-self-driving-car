@@ -64,3 +64,54 @@ h1 {
     align-items: center;
     margin-bottom: 15px;
 }
+
+textarea {
+  width: 90%;
+  min-height: 120px; /* ensures at least 120px tall */
+  resize: vertical;  /* allows manual vertical resizing only */
+  padding: 8px;
+  font-size: 14px;
+}
+
+#neuralNetworkControls {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.layerControl {
+    margin: 5px 0;
+}
+
+.layerControl label {
+    display: inline-block;
+    width: 150px;
+}
+
+.layerControl input {
+    width: 50px;
+}
+
+#carDescription {
+    margin-top: 10px;
+    font-family: monospace;
+}
+
+#carDescription h4 {
+    margin: 5px 0;
+    color: #333;
+}
+
+#carDescription p {
+    margin: 3px 0;
+    color: #666;
+}
+
+#neuralNetworkControls button {
+    margin: 5px;
+    padding: 5px 10px;
+}

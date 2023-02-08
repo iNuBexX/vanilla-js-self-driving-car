@@ -1,5 +1,5 @@
 class Car {
-    constructor(x, y, width, height, controlType, maxSpeed=3,timeToLive=300,rayCount=8, raySpread=Math.PI, rayLength=150) {
+    constructor(x, y, width, height, controlType, maxSpeed=3,timeToLive=300,rayCount=8, raySpread=Math.PI, rayLength=150, networkStructure = [5, 4, 4]) {
         this.x = x;
         this.y = y;
         this.rayCount= rayCount;
@@ -19,7 +19,9 @@ class Car {
         this.timeToLive = timeToLive; // Approx. 5 seconds at 60fps
         if(this.controlType!="AI"){
             this.sensor = new Sensor(this);
-            this.brain = new NeuralNetwork([this.sensor.rayCount+1,15,4]);
+            this.brain = new NeuralNetwork([this.sensor.rayCount+1, // inputs layers
+                ...networkStructure.slice(1, -1), // hidden layers
+                4]); // output layers
         }
         this.controls = new Controls(controlType);
         this.angle = 0;
@@ -172,6 +174,16 @@ class Car {
         }
         this.x -= Math.sin(this.angle) * this.speed;
         this.y -= Math.cos(this.angle) * this.speed;    
+    }
+
+    updateNetworkStructure(newStructure) {
+        if (this.brain) {
+            this.brain = new NeuralNetwork(
+                newStructure[0],
+                ...newStructure.slice(1, -1),
+                newStructure[newStructure.length - 1]
+            );
+        }
     }
 
 }

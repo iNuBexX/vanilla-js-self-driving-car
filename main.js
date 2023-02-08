@@ -15,6 +15,7 @@ let mutationAmount = parseFloat(localStorage.getItem("mutationAmount")) || 0.5;
 let cullDistance = parseInt(localStorage.getItem("cullDistance")) || 500;
 let TRAFFIC_GRID_SPACING = 300; // The desired distance between traffic cars in pixels
 let nextSpawnY = 0; // Tracks the y-coordinate for the next row of traffic
+let isDiscard = false;
 if(localStorage.getItem("mutationAmount")){
     document.getElementById("mutationInput").value = parseFloat(localStorage.getItem("mutationAmount"));
 }
@@ -59,6 +60,73 @@ function setDifficulty(level) {
     localStorage.setItem("difficulty", level);
     updateDifficultyButtons();
 }
+const INPUT_NEURONS = 5;  // Number of rays
+const OUTPUT_NEURONS = 4; // Number of controls
+
+// Initial network structure with fixed input and output
+let networkStructure = [INPUT_NEURONS, 4, OUTPUT_NEURONS];
+
+function initializeNetworkControls() {
+    updateLayerControls();
+}
+
+function addLayer() {
+    // Insert a new hidden layer
+    networkStructure.splice(networkStructure.length - 1, 0, 4);
+    updateLayerControls();
+    isDiscard = true;
+}
+
+function removeLayer() {
+    // Keep at least one hidden layer
+    if (networkStructure.length > 3) {
+        networkStructure.splice(networkStructure.length - 2, 1);
+        updateLayerControls();
+        isDiscard = true;
+    }
+}
+
+function updateLayerControls() {
+    const container = document.getElementById('hiddenLayersContainer');
+    container.innerHTML = '';
+    
+    // Create controls for each hidden layer
+    for (let i = 1; i < networkStructure.length - 1; i++) {
+        const layerDiv = document.createElement('div');
+        layerDiv.className = 'layerControl';
+        layerDiv.innerHTML = `
+            <label>Hidden Layer ${i} Neurons:</label>
+            <input type="number" 
+                   value="${networkStructure[i]}" 
+                   min="1" 
+                   max="10" 
+                   onchange="updateLayerSize(${i}, this.value)">
+        `;
+        container.appendChild(layerDiv);
+    }
+}
+
+function updateLayerSize(layerIndex, newSize) {
+    networkStructure[layerIndex] = parseInt(newSize);
+    isDiscard = true;
+}
+
+function applyNetworkChanges() {
+    // Store cars reference globally if not already done
+    if (!window.cars && window.carConstructor) {
+        window.cars = window.carConstructor.cars;
+    }
+    
+    // Ensure input and output layers are always fixed
+    networkStructure[0] = INPUT_NEURONS;
+    networkStructure[networkStructure.length - 1] = OUTPUT_NEURONS;
+    
+    // Update the car constructor with new network structure
+    if (window.carConstructor) {
+        window.carConstructor.updateNetworkStructure(networkStructure);
+    }
+    isDiscard = true;
+}
 
 function updateDifficultyButtons() {
     const buttons = document.querySelectorAll('.Difficulty button');
@@ -101,11 +169,18 @@ function SaveNbOfStartingAgents(){
 
 
 function save(){
+    console.log("saved");
     localStorage.setItem("bestBrain",JSON.stringify(bestCar.brain));
+    document.getElementById("currentbestBrainTextArea").textContent= JSON.stringify(bestCar.brain);
+
 }
 
 function discard(){
+    console.log("discarded");
     localStorage.removeItem("bestBrain");
+    isDiscard = true;
+    document.getElementById("currentbestBrainTextArea").textContent= "Discarded current, brain starting fresh next round";
+
 }
 function generateCars(N){
     const numberOfStartingAgents = parseInt(localStorage.getItem("numberOfStartingAgents")) || 200;
@@ -136,7 +211,8 @@ function resetSimulation() {
     bestCar = cars[0];
     nextSpawnY = bestCar.y - window.innerHeight*0.12; // Reset the spawn frontier
 
-    if (localStorage.getItem("bestBrain")) {
+    if (localStorage.getItem("bestBrain") && isDiscard) { //if  the isDiscard on next round flag is not set 
+        // mutates the cars baised  on bestBrain
         for (let i = 0; i < cars.length; i++) {
             cars[i].brain = JSON.parse(localStorage.getItem("bestBrain"));
             if (i != 0) {
@@ -144,6 +220,8 @@ function resetSimulation() {
             }
         }
     }
+    // eitherway set the discard flag to false but do we want that ? 
+    isDiscard = false;
     animationFrameId = requestAnimationFrame(animate);
 }
 
@@ -202,7 +280,8 @@ function animate(time){
 
 
     if (cars.every(c => c.damaged)) {
-        save();
+        if (!isDiscard)
+            save();
         resetSimulation();
         return;
     }   
@@ -236,4 +315,43 @@ function animate(time){
     networkCtx.lineDashOffset=-time/50;
     Visualizer.drawNetwork(networkCtx,bestCar.brain);
     animationFrameId = requestAnimationFrame(animate);
+}
+
+function describeRandomCar() {
+    if (window.cars && window.cars.length > 0) {
+        // Pick a random car
+        const randomIndex = Math.floor(Math.random() * window.cars.length);
+        const selectedCar = window.cars[randomIndex];
+        
+        // Get the description element
+        const descriptionElement = document.getElementById('carDescription');
+        
+        if (selectedCar.brain) {
+            // Create description text
+            const structure = selectedCar.brain.layers.map(layer => layer.neurons.length);
+            const description = `
+                <div style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                    <h4>Car #${randomIndex + 1} Neural Network:</h4>
+                    <p>Network Structure: [${structure.join(', ')}]</p>
+                    <p>Total Layers: ${structure.length}</p>
+                    <p>Input Neurons: ${structure[0]} (Rays)</p>
+                    <p>Hidden Layers: ${structure.length - 2}</p>
+                    <p>Output Neurons: ${structure[structure.length - 1]} (Controls)</p>
+                </div>
+            `;
+            descriptionElement.innerHTML = description;
+        } else {
+            descriptionElement.innerHTML = `
+                <div style="margin-top: 10px; padding: 10px; background: #ffe6e6; border-radius: 5px;">
+                    Car #${randomIndex + 1} has no neural network (DUMMY car)
+                </div>
+            `;
+        }
+    } else {
+        document.getElementById('carDescription').innerHTML = `
+            <div style="margin-top: 10px; padding: 10px; background: #ffe6e6; border-radius: 5px;">
+                No cars available to describe
+            </div>
+        `;
+    }
 }

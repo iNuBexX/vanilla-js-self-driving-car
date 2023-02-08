@@ -23,7 +23,8 @@
             <button onclick="setDifficulty('hard')" data-level="hard">Hard</button>
         </div>
         <h1>Save/Load</h1>
-        <button onclick="save()">Save 💾</button>
+        <button onclick="save()">Save Best 💾</button>
+        <textarea id="currentbestBrainTextArea"> current model brain : </textarea>
         <button onclick="discard()">Discard 🗑️</button>
 
         <h1>Agent Properties</h1>
@@ -52,11 +53,31 @@
             <input id="raySpreadInput" type="number" value="180" />
             <label for="rayCountInput">Sensor Number of Rays</label>
             <input id="rayCountInput" type="number" value="40" />
-
             <label for="rayLengthInput">Sensor Ray Length</label>
             <input id="rayLengthInput" type="number" value="150" />
             <button onclick="saveSensor()">Save Sensors</button>
         </div>
+
+        <div id="neuralNetworkControls">
+            <h3>Neural Network Configuration</h3>
+            <div class="layerControl">
+                <label>Input Layer (Rays):</label>
+                <input type="number" value="5" disabled>
+            </div>
+            <div id="hiddenLayersContainer">
+                <!-- Hidden layers will be dynamically added here -->
+            </div>
+            <div class="layer^ontrol">
+                <label>Output Layer (Controls):</label>
+                <input type="number" value="4" disabled>
+            </div>
+        </div>
+    <button onclick="addLayer()">Add Hidden Layer</button>
+    <button onclick="removeLayer()">Remove Hidden Layer</button>
+    <button onclick="applyNetworkChanges()">Apply Changes</button>
+    <button onclick="describeRandomCar()">Describe</button>
+    <div id="carDescription"></div>
+</div>
     </div>
     <canvas id="networkCanvas"></canvas>
     
