@@ -29,6 +29,24 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 
+const modal = document.getElementById("tooltipModal");
+const modalText = document.getElementById("modalText");
+
+function openModal(element) {
+    const text = element.getAttribute('data-tooltip');
+    modalText.textContent = text;
+    modal.style.display = "flex";
+}
+
+function closeModal() {
+    modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        closeModal();
+    }
+}
 
 function updateEraGraph() {
     const eraGraph = document.getElementById("eraGraph");

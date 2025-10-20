@@ -14,13 +14,17 @@
                 <p>Time Left: <span id="ttlCounter">0</span></p>
                 <input id="ttlInput" type="number" value="300" />
                 <button onclick="saveTTL()">Save TTL</button>
+                <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="Time To Live (TTL): The maximum number of frames a car can survive . So without making forward progress or if a car gets stuck, this ensures it is eventually removed.">?</span>
             </div>
         </div>
-        <h1>Difficulty</h1>
-        <div class="Difficulty">
-            <button onclick="setDifficulty('easy')" data-level="easy">Easy</button>
-            <button onclick="setDifficulty('medium')" data-level="medium">Medium</button>
-            <button onclick="setDifficulty('hard')" data-level="hard">Hard</button>
+        <div class="sensor-controls">
+            <h1>Difficulty</h1>
+            <div class="Difficulty">
+                <button onclick="setDifficulty('easy')" data-level="easy">Easy</button>
+                <button onclick="setDifficulty('medium')" data-level="medium">Medium</button>
+                <button onclick="setDifficulty('hard')" data-level="hard">Hard</button>
+            </div>
+            <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="Adjusts the speed and density of traffic. 'Easy' has sparse traffic, while 'Hard' has dense traffic.">?</span>
         </div>
         <div class="sensor-controls">
             <h1>Save/Load</h1>
@@ -35,26 +39,32 @@
             <label for="mutationInput">Neural Network Mutation</label>
             <input id="mutationInput" type="number" value="0.01" />
             <button onclick="saveMutation()">Save Mutation</button>
+            <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="Controls the amount of random variation applied to the neural networks of new cars. Higher values lead to more exploration but can be unstable. Lower values lead to more refinement.">?</span>
         </div>
 
         <h1>Neural Network Architecture</h1>
         <div id="network-controls">
             <!-- Layer controls will be dynamically added here -->
         </div>
-        <button onclick="addLayer()">Add Hidden Layer</button>
-        <button onclick="removeLayer()">Remove Hidden Layer</button>
-        <button onclick="saveNetwork()">Save Network</button>
-
+        <div class="culling-controls">
+            <button onclick="addLayer()">Add Hidden Layer</button>
+            <button onclick="removeLayer()">Remove Hidden Layer</button>
+            <button onclick="saveNetwork()">Save Network</button>
+            <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="Defines the structure of the neural network. You can add or remove hidden layers and set the number of neurons in each. Changes will reset the simulation.">?</span>
+        </div>
+        
         <div class="culling-controls">
             <label for="numberOfStartingAgentsInput">Number Of Starting Agents</label>
             <input id="numberOfStartingAgentsInput" type="number" value="200" />
             <button onclick="SaveNbOfStartingAgents()">Save</button>
+            <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="Adjusts the number of starting agents (cars) in the simulation. More agents can lead to more competition but also require more resources.">?</span>
         </div>       
         
         <div class="culling-controls">
             <label for="cullDistanceInput">Culling Distance</label>
             <input id="cullDistanceInput" type="number" value="500" />
             <button onclick="saveCullDistance()">Save Culling</button>
+            <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="The maximum distance a car can fall behind the lead car before it is automatically removed from the simulation.">?</span>
         </div>    
 
         <div class="sensor-controls">
@@ -68,6 +78,8 @@
             <label for="rayLengthInput">Sensor Ray Length</label>
             <input id="rayLengthInput" type="number" value="150" />
             <button onclick="saveSensor()">Save Sensors</button>
+            <span class="tooltip-trigger" onclick="openModal(this)" data-tooltip="Configures the car's sensors. 'Ray Count' is the number of sensors, 'Spread' is the total angle they cover, and 'Length' is how far they can 'see'.">?</span>
+
         </div>
         <div class="sensor-controls">
             <h1>Training Eras</h1>
@@ -79,6 +91,13 @@
     </div>
     <canvas id="networkCanvas"></canvas>
     
+    <div id="tooltipModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <p id="modalText"></p>
+        </div>
+    </div>
+
     <script src="utils.js"></script>
     <script src="visualizer.js"></script>
     <script src="network.js"></script>
