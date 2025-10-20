@@ -22,9 +22,12 @@
             <button onclick="setDifficulty('medium')" data-level="medium">Medium</button>
             <button onclick="setDifficulty('hard')" data-level="hard">Hard</button>
         </div>
-        <h1>Save/Load</h1>
-        <button onclick="save()">Save 💾</button>
-        <button onclick="discard()">Discard 🗑️</button>
+        <div class="sensor-controls">
+            <h1>Save/Load</h1>
+            <button onclick="save()">Save 💾</button>
+            <button onclick="discard()">Discard 🗑️</button>
+            <textarea id ="bestBrainTextarea">Current best brain:</textarea>
+        </div>
 
         <h1>Agent Properties</h1>
 
@@ -33,6 +36,15 @@
             <input id="mutationInput" type="number" value="0.01" />
             <button onclick="saveMutation()">Save Mutation</button>
         </div>
+
+        <h1>Neural Network Architecture</h1>
+        <div id="network-controls">
+            <!-- Layer controls will be dynamically added here -->
+        </div>
+        <button onclick="addLayer()">Add Hidden Layer</button>
+        <button onclick="removeLayer()">Remove Hidden Layer</button>
+        <button onclick="saveNetwork()">Save Network</button>
+
         <div class="culling-controls">
             <label for="numberOfStartingAgentsInput">Number Of Starting Agents</label>
             <input id="numberOfStartingAgentsInput" type="number" value="200" />
@@ -45,17 +57,24 @@
             <button onclick="saveCullDistance()">Save Culling</button>
         </div>    
 
-        <h1>Sensors Properties</h1>
         <div class="sensor-controls">
-
+            <h1>Sensors Properties</h1>
+            
             <label for="raySpreadInput">Sensor Angle</label>
             <input id="raySpreadInput" type="number" value="180" />
             <label for="rayCountInput">Sensor Number of Rays</label>
             <input id="rayCountInput" type="number" value="40" />
-
+            
             <label for="rayLengthInput">Sensor Ray Length</label>
             <input id="rayLengthInput" type="number" value="150" />
             <button onclick="saveSensor()">Save Sensors</button>
+        </div>
+        <div class="sensor-controls">
+            <h1>Training Eras</h1>
+            <div id="eraGraph">
+                <data id="era-square" value="0"></data>
+                <!-- Squares will be added here dynamically -->
+            </div>
         </div>
     </div>
     <canvas id="networkCanvas"></canvas>

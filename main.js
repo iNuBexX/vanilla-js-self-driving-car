@@ -7,14 +7,94 @@ const carCtx = carCanvas.getContext("2d");
 const networkCtx = networkCanvas.getContext("2d");
 const road=new Road(carCanvas.width/2,carCanvas.width*0.9);
 const numberOfSpawnedCars = parseInt(localStorage.getItem("numberOfStartingAgents")) || 200;
-let cars=generateCars(numberOfSpawnedCars);
-let bestCar=cars[0];
+let hiddenLayerArchitecture = JSON.parse(localStorage.getItem("hiddenLayerArchitecture")) || [6];
 let animationFrameId;
 let lastSpawnTime = 0;
 let mutationAmount = parseFloat(localStorage.getItem("mutationAmount")) || 0.5;
 let cullDistance = parseInt(localStorage.getItem("cullDistance")) || 500;
 let TRAFFIC_GRID_SPACING = 300; // The desired distance between traffic cars in pixels
 let nextSpawnY = 0; // Tracks the y-coordinate for the next row of traffic
+let isDiscard = false;
+let networkArchitecture = JSON.parse(localStorage.getItem("networkArchitecture")) || [null, 6, 4];
+let cars=generateCars(numberOfSpawnedCars);
+let bestCar=cars[0];
+let eraCount = parseInt(localStorage.getItem("eraCount")) || 0;
+let eraPerformance = JSON.parse(localStorage.getItem("eraPerformance")) || [];
+let topY = parseFloat(localStorage.getItem("topY")) || 100;
+
+document.addEventListener("DOMContentLoaded", function() {
+    updateLayerControls();
+    updateDifficultyButtons();
+    updateDifficultyButtons();
+});
+
+
+
+function updateEraGraph() {
+    const eraGraph = document.getElementById("eraGraph");
+    eraGraph.innerHTML = ''; // Clear existing squares
+    const topDistance = 100 - topY;
+    for (let i = eraCount; i > 0; i--) {
+        const eraY = eraPerformance[i - 1];
+        if (eraY === undefined) continue;
+        const eraDistance = 100 - eraY;
+        let ratio = 0;
+        if (topDistance > 0) {
+            ratio = Math.min(1, eraDistance / topDistance);
+        }
+        const lightness = 80 - (ratio * (80 - 41));
+        const color = `hsl(139, 55%, ${lightness}%)`;
+        const square = document.createElement('div');
+        square.className = 'era-square';
+        square.title = `Era ${i} | y: ${Math.round(eraY)}`;
+        square.style.backgroundColor = color;
+        eraGraph.appendChild(square);
+    }
+}
+
+function updateLayerControls() {
+    const networkControls = document.getElementById("network-controls");
+    networkControls.innerHTML = ''; // Clear existing controls
+    hiddenLayerArchitecture.forEach((neuronCount, index) => {
+        const layerControl = document.createElement("div");
+        layerControl.classList.add("layer-control");
+        layerControl.innerHTML = `
+            <label for="layer${index + 1}Input">Hidden Layer ${index + 1} Neurons</label>
+            <input id="layer${index + 1}Input" type="number" value="${neuronCount}" />
+        `;
+        networkControls.appendChild(layerControl);
+    });
+}
+
+function addLayer() {
+    hiddenLayerArchitecture.push(6); // Add a new layer with 6 neurons
+    updateLayerControls();
+}
+
+function removeLayer() {
+    if (hiddenLayerArchitecture.length > 1) { // Keep at least one hidden layer
+        hiddenLayerArchitecture.pop(); // Remove the last hidden layer
+        updateLayerControls();
+    }
+}
+function saveNetwork() {
+    hiddenLayerArchitecture.forEach((_, index) => {
+        const input = document.getElementById(`layer${index + 1}Input`);
+        if (input) {
+            hiddenLayerArchitecture[index] = parseInt(input.value);
+        }
+    });
+    localStorage.setItem("hiddenLayerArchitecture", JSON.stringify(hiddenLayerArchitecture));
+    isDiscard=true;
+    eraCount = 0;
+    localStorage.setItem("eraCount", "0");
+    eraPerformance = [];
+    localStorage.removeItem("eraPerformance");
+    topY = 100;
+    localStorage.setItem("topY", "100");
+    resetSimulation();
+}
+
 if(localStorage.getItem("mutationAmount")){
     document.getElementById("mutationInput").value = parseFloat(localStorage.getItem("mutationAmount"));
 }
@@ -101,11 +181,24 @@ function SaveNbOfStartingAgents(){
 
 
 function save(){
+    if(isDiscard){
+        return;
+    }
+    document.getElementById("bestBrainTextarea").value = JSON.stringify(bestCar.brain);
     localStorage.setItem("bestBrain",JSON.stringify(bestCar.brain));
 }
 
 function discard(){
     localStorage.removeItem("bestBrain");
+    isDiscard = true;
+    eraPerformance = [];
+    localStorage.removeItem("eraPerformance");
+    topY = 100;
+    localStorage.removeItem("topY");
+    updateEraGraph();
+    localStorage.setItem("eraCount", "0");
+    eraCount = 0;
+    resetSimulation()
 }
 function generateCars(N){
     const numberOfStartingAgents = parseInt(localStorage.getItem("numberOfStartingAgents")) || 200;
@@ -113,8 +206,11 @@ function generateCars(N){
     const raySpread = parseFloat(localStorage.getItem("raySpread")) || 180;
     const rayLength = parseFloat(localStorage.getItem("rayLength")) || 150;
     const cars=[];
+    const inputCount = rayCount + 1;
+    const outputCount = 4;
+    const networkArchitecture = [inputCount, ...hiddenLayerArchitecture, outputCount];
     for(let i=1;i<=numberOfStartingAgents;i++){
-        cars.push(new Car(road.getLaneCenter(1),100,30,50,"NeuralNetwork", 5, timeToLive, rayCount, raySpread * Math.PI / 180, rayLength));
+        cars.push(new Car(road.getLaneCenter(1),100,30,50,"NeuralNetwork", 5, timeToLive, rayCount, raySpread * Math.PI / 180, rayLength, networkArchitecture));
     }
     return cars;
 }
@@ -127,6 +223,9 @@ function getTopOfScreen(followedCar) {
 }
 
 function resetSimulation() {
+    localStorage.setItem("eraCount", eraCount.toString());
+    eraCount++;
+    updateEraGraph();
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
@@ -136,7 +235,7 @@ function resetSimulation() {
     bestCar = cars[0];
     nextSpawnY = bestCar.y - window.innerHeight*0.12; // Reset the spawn frontier
 
-    if (localStorage.getItem("bestBrain")) {
+    if (localStorage.getItem("bestBrain") && !isDiscard) {
         for (let i = 0; i < cars.length; i++) {
             cars[i].brain = JSON.parse(localStorage.getItem("bestBrain"));
             if (i != 0) {
@@ -144,6 +243,7 @@ function resetSimulation() {
             }
         }
     }
+    isDiscard = false;
     animationFrameId = requestAnimationFrame(animate);
 }
 
@@ -202,7 +302,19 @@ function animate(time){
 
 
     if (cars.every(c => c.damaged)) {
-        save();
+        if (!isDiscard) {
+            save();
+            const eraY = bestCar.y;
+            eraPerformance.push(eraY);
+            if (eraY < topY) {
+                topY = eraY;
+                localStorage.setItem("topY", topY.toString());
+            }
+            localStorage.setItem("eraPerformance", JSON.stringify(eraPerformance));
+            eraCount++;
+            localStorage.setItem("eraCount", eraCount.toString());
+            updateEraGraph();
+        }
         resetSimulation();
         return;
     }   
@@ -232,7 +344,7 @@ function animate(time){
     }
     carCtx.restore();
     
-    ttlCounter.innerText = Math.max(0, Math.round(bestCar.timeToLive - bestCar.lifeTime));
+    ttlCounter.innerText = Math.max(0, Math.round(leadCar.timeToLive - leadCar.lifeTime));
     networkCtx.lineDashOffset=-time/50;
     Visualizer.drawNetwork(networkCtx,bestCar.brain);
     animationFrameId = requestAnimationFrame(animate);
